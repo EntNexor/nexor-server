@@ -2,6 +2,7 @@
 import json
 import urllib.request
 import urllib.error
+import os
 
 API_KEY = "AIzaSyDMh8N08gKPadug_hx0Na8d3-lxTDDuguI"
 URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
@@ -14,6 +15,16 @@ class ProxyHandler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.end_headers()
 
+    def do_GET(self):
+        if self.path == '/':
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html')
+            self.end_headers()
+            self.wfile.write(b'<h1>Entidad Nexor - Servidor Activo</h1><p>El servidor esta funcionando correctamente.</p>')
+        else:
+            self.send_response(404)
+            self.end_headers()
+
     def do_POST(self):
         if self.path == '/chat':
             try:
@@ -21,7 +32,6 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 body = self.rfile.read(content_length)
                 data = json.loads(body)
 
-                # Enviar a Gemini con la key oculta
                 req = urllib.request.Request(
                     URL + "?key=" + API_KEY,
                     data=json.dumps(data).encode('utf-8'),
@@ -55,12 +65,14 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def log_message(self, format, *args):
-        pass  # Silenciar logs
+        pass
 
-print("🚀 Servidor Nexor iniciado en http://localhost:8000")
+PORT = int(os.environ.get('PORT', 8000))
+
+print("🚀 Servidor Nexor iniciado")
 print("📡 Proxy a Gemini activo - API Key protegida")
 print("⛔ No cierres esta ventana mientras uses el chat")
 print("")
 
-server = HTTPServer(('localhost', 8000), ProxyHandler)
+server = HTTPServer(('0.0.0.0', PORT), ProxyHandler)
 server.serve_forever()
